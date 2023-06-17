@@ -75,20 +75,19 @@
                 }`)
             // Make the client think that returns, refunds, and exchanges are allowed
             .replace(getLineItem_regex,
-                `getLineItem(e, t = {}) {
-                    const n = Ve();
-                    return B.get("api/v1/" + n + "/order/" + e + "/line_item", { params: t }).then(
-                        (a) => {
-                            let newData = { ...a.data };
-                            newData.allowed = {
+                `getLineItem(lineItemId, params = {}) {
+                    const shopId = Ve();
+                    return B.get("api/v1/" + shopId + "/order/" + lineItemId + "/line_item", { params }).then(
+                        (res) => {
+                            res.data.allowed = {
                                 return: true,
                                 refund: true,
                                 exchange: true,
-                                gift: newData.allowed.gift,
-                                returned: newData.allowed.returned,
+                                gift: res.data.allowed.gift,
+                                returned: res.data.allowed.returned,
                                 reason: "",
                             };
-                            newData.excluded = {
+                            res.data.excluded = {
                                 advancedExchange: false,
                                 inlineExchange: false,
                                 shopNow: false,
@@ -96,9 +95,14 @@
                                 refund: false,
                                 storeCredit: false,
                             };
-                            newData.return_window_active = true;
-                            newData.returns = [];
-                            return newData;
+                            res.data.return_window_active = true;
+                            res.data.returns = [];
+
+                            // Always show return destination name for items
+                            res.data.destinations.forEach(destination => {
+                                destination.display_name_in_portal = true;
+                            });
+                            return res.data;
                         }
                     );
                 }`)
