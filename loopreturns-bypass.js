@@ -40,7 +40,6 @@
 
         // Define the regex patterns for the portions of the script to be replaced
         const importsUrl_regex = /\.\/vendor\.e9cd2c58\.js/g;
-        const getWorkflowResults_regex = /oi=async function\(e,t\){const n=await B\.post\(`api\/v1\/\$\{e\}\/workflows\/evaluate`,t\);return n==null\?void 0:n\.data}/g;
         const getLineItem_regex = /getLineItem\(e,t=\{\}\)\{const n=Ve\(\);return B\.get\(`api\/v1\/\$\{n\}\/order\/\$\{e\}\/line_item`,\{params:t\}\)\.then\(a=>a\.data\)\}/g;
         const findOrder_regex = /,t=await Pe\.lookup\(e\);/g;
 
@@ -49,12 +48,6 @@
             .replace(importsUrl_regex, document.querySelector(`link[href^="${baseLibraryUrl}"]`).href)
             // Replace relative path to components with absolute
             .replace(/import\(\"\.\/([^"]+)\"\)/g, `import("${assetsUrl}$1")`)
-            // Make the client think that the workflow is going to work no matter what
-            .replace(getWorkflowResults_regex,
-                `getWorkflowResults = async function (shopId, data) {
-                    // This route can only block the return/exchange so an empty response is good
-                    return {};
-                }`)
             // Make the client think that returns, refunds, and exchanges are allowed
             .replace(getLineItem_regex,
                 `getLineItem(lineItemId, params = {}) {
@@ -65,7 +58,7 @@
                                 return: true,
                                 refund: true,
                                 exchange: true,
-                                gift: res.data.allowed.gift,
+                                gift: true,
                                 returned: res.data.allowed.returned,
                                 reason: "",
                             };
@@ -77,8 +70,6 @@
                                 refund: false,
                                 storeCredit: false,
                             };
-                            res.data.return_window_active = true;
-                            res.data.returns = []; // Not sure if necessary yet
 
                             // Always show return destination name for products
                             res.data.destinations.forEach(destination => {
@@ -92,18 +83,8 @@
             .replace(findOrder_regex,
                 `;
                 let t = await Pe.lookup(e);
-                // Make the client think that the order is eligible for a refund forever even if it is a gift too
-                t.data.eligibility.gift = true;
-                t.data.eligibility.refund = true;
-                t.data.eligible = "No expiration";
-                t.data.enabled = {
-                    refund: "yes",
-                    exchange: "yes",
-                    gift: "yes",
-                    storefront: "yes",
-                    on_store_api: "yes"
-                };
-                // Don't check workflow exclusions for: allowReplace, allowExchange, allowAdvancedExchange, allowReturn
+                // Override workflow exclusions
+                // Override return window and type restrictions
                 // May make lineItem overrides unnecessary
                 t.data.allowlisted = true;`);
 
