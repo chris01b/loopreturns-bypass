@@ -56,22 +56,26 @@
                         "api/v1/" + shopId + "/workflows/evaluate",
                         data,
                     );
-                    if (response !== null && response !== void 0 && response.data) {
-                        for (let obj of response.data) {
+                    if (response?.data) {
+                        response.data = response.data.map(obj => {
                             if (obj.value && typeof obj.value === "object") {
-                                obj.value = {
-                                    refund: false,
-                                    exchange: false,
-                                    storeCredit: false,
-                                    inlineExchange: true,
-                                    advancedExchange: true,
-                                    instantExchange: false,
-                                    shopNow: true,
+                                // Excluded outcomes
+                                return {
+                                    value: {
+                                        refund: false,
+                                        exchange: false,
+                                        storeCredit: false,
+                                        inlineExchange: false,
+                                        advancedExchange: false,
+                                        instantExchange: false,
+                                        shopNow: false,
+                                    }
                                 };
                             }
-                        }
+                            return obj;
+                        });
                     }
-                    return response === null || response === void 0 ? void 0 : response.data;
+                    return response?.data;
                 }`)
             // Make the client think that returns, refunds, and exchanges are allowed
             .replace(getLineItem_regex,
@@ -86,6 +90,13 @@
                                 gift: res.data.allowed.gift,
                                 returned: res.data.allowed.returned,
                                 reason: "",
+                                // Not sure if necessary
+                                "advancedExchange": true,
+                                "inlineExchange": true,
+                                "shopNow": true,
+                                "instantExchange": true,
+                                "refund": true,
+                                "storeCredit": true
                             };
                             res.data.excluded = {
                                 advancedExchange: false,
@@ -96,9 +107,9 @@
                                 storeCredit: false,
                             };
                             res.data.return_window_active = true;
-                            res.data.returns = [];
+                            res.data.returns = []; // Not sure if necessary yet
 
-                            // Always show return destination name for items
+                            // Always show return destination name for products
                             res.data.destinations.forEach(destination => {
                                 destination.display_name_in_portal = true;
                             });
@@ -110,9 +121,20 @@
             .replace(findOrder_regex,
                 `;
                 let t = await Pe.lookup(e);
+                // Make the client think that the order is eligible for a refund forever even if it is a gift too
                 t.data.eligibility.gift = true;
                 t.data.eligibility.refund = true;
-                t.data.eligible = "No expiration";`);
+                t.data.eligible = "No expiration";
+                t.data.enabled = {
+                    refund: "yes",
+                    exchange: "yes",
+                    gift: "yes",
+                    storefront: "yes",
+                    on_store_api: "yes"
+                };
+                // Don't check workflow exclusions for: allowReplace, allowExchange, allowAdvancedExchange, allowReturn
+                // May make lineItem overrides unnecessary
+                t.data.allowListed = true;`);
 
         // Create a blob from the modified script and an object URL from the blob
         const blob = new Blob([newScript], {type: 'application/javascript; charset=UTF-8'});
