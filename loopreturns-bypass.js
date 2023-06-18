@@ -52,30 +52,8 @@
             // Make the client think that the workflow is going to work no matter what
             .replace(getWorkflowResults_regex,
                 `getWorkflowResults = async function (shopId, data) {
-                    const response = await axios.post(
-                        "api/v1/" + shopId + "/workflows/evaluate",
-                        data,
-                    );
-                    if (response?.data) {
-                        response.data = response.data.map(obj => {
-                            if (obj.value && typeof obj.value === "object") {
-                                // Excluded outcomes
-                                return {
-                                    value: {
-                                        refund: false,
-                                        exchange: false,
-                                        storeCredit: false,
-                                        inlineExchange: false,
-                                        advancedExchange: false,
-                                        instantExchange: false,
-                                        shopNow: false,
-                                    }
-                                };
-                            }
-                            return obj;
-                        });
-                    }
-                    return response?.data;
+                    // This route can only block the return/exchange so an empty response is good
+                    return {};
                 }`)
             // Make the client think that returns, refunds, and exchanges are allowed
             .replace(getLineItem_regex,
@@ -90,13 +68,6 @@
                                 gift: res.data.allowed.gift,
                                 returned: res.data.allowed.returned,
                                 reason: "",
-                                // Not sure if necessary
-                                "advancedExchange": true,
-                                "inlineExchange": true,
-                                "shopNow": true,
-                                "instantExchange": true,
-                                "refund": true,
-                                "storeCredit": true
                             };
                             res.data.excluded = {
                                 advancedExchange: false,
@@ -134,7 +105,7 @@
                 };
                 // Don't check workflow exclusions for: allowReplace, allowExchange, allowAdvancedExchange, allowReturn
                 // May make lineItem overrides unnecessary
-                t.data.allowListed = true;`);
+                t.data.allowlisted = true;`);
 
         // Create a blob from the modified script and an object URL from the blob
         const blob = new Blob([newScript], {type: 'application/javascript; charset=UTF-8'});
