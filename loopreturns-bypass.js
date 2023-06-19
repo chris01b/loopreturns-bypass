@@ -23,7 +23,7 @@
             for (let node of mutation.addedNodes) {
                 if (node.nodeType === 1 && node.tagName === 'SCRIPT' && node.type === 'module' && node.src.startsWith(baseCodeUrl)) {
                     // Remove the original script element from the DOM before it executes
-                    node.remove();
+                    // node.remove();
                     // Once the script is found and removed, stop the observer
                     observer.disconnect();
 
@@ -44,12 +44,15 @@
         const importsUrl_regex = /\.\/vendor\.e9cd2c58\.js/g;
         const getLineItem_regex = /getLineItem\(e,t=\{\}\)\{const n=Ve\(\);return B\.get\(`api\/v1\/\$\{n\}\/order\/\$\{e\}\/line_item`,\{params:t\}\)\.then\(a=>a\.data\)\}/g;
         const findOrder_regex = /,t=await Pe\.lookup\(e\);/g;
+        const diffPricedExchanges_regex = /differentPricedExchangesEnabled:e\.diff_priced_exchanges==="yes"/g;
 
         const newScript = originalScript
             // Replace relative path to library with absolute
             .replace(importsUrl_regex, document.querySelector(`link[href^="${baseLibraryUrl}"]`).href)
             // Replace relative path to components with absolute
             .replace(/import\(\"\.\/([^"]+)\"\)/g, `import("${assetsUrl}$1")`)
+            // Allow different priced exchanges
+            .replace(diffPricedExchanges_regex, "differentPricedExchangesEnabled: true")
             // Make the client think that returns, refunds, and exchanges are allowed
             .replace(getLineItem_regex,
                 `getLineItem(lineItemId, params = {}) {
