@@ -4,7 +4,9 @@
 // @version      0.1
 // @description  Bypass Loop Returns Workflows
 // @author       @chris01b
+// @match        https://*.loopreturns.com/*
 // @match        https://returns.aviatornation.com/*
+// @exclude      https://www.loopreturns.com/*
 // @run-at       document-start
 // ==/UserScript==
 
