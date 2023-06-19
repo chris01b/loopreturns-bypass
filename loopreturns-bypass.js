@@ -18,15 +18,13 @@
     const baseLibraryUrl = assetsUrl + "vendor.";
 
     // Look for the original script tag in the document head
+    // Handles cases where the original script may be dynamically added to the document head at an unpredictable time
     const observer = new MutationObserver(mutations => {
         for (let mutation of mutations) {
             for (let node of mutation.addedNodes) {
                 if (node.nodeType === 1 && node.tagName === 'SCRIPT' && node.type === 'module' && node.src.startsWith(baseCodeUrl)) {
-                    // Remove the original script element from the DOM before it executes
-                    // node.remove();
-                    // Once the script is found and removed, stop the observer
+                    // Once the script is found and removed, stop the observer, and modify the code
                     observer.disconnect();
-
                     modifyScript(node.src);
                 }
             }
