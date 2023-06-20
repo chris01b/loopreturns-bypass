@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         loopreturns-bypass
 // @namespace    https://github.com/chris01b/loopreturns-bypass
-// @version      0.1
-// @description  Bypass Loop Returns Workflows
+// @version      1.0
+// @description  Return everything without exception on Loop Returns for Shopify
 // @author       @chris01b
 // @match        https://*.loopreturns.com/*
 // @match        https://returns.aviatornation.com/*
@@ -14,39 +14,39 @@
     'use strict';
 
     const assetsUrl = "https://d1nnh0c8uc313v.cloudfront.net/customer-portal/assets/";
-    const baseCodeUrl = assetsUrl + "index.";
-    const baseLibraryUrl = assetsUrl + "vendor.";
 
-    // Look for the original script tag in the document head
+    // Look for the original code in the document head
     // Handles cases where the original script may be dynamically added to the document head at an unpredictable time
-    const observer = new MutationObserver(mutations => {
+    const observer = new MutationObserver(async mutations => {
         for (let mutation of mutations) {
             for (let node of mutation.addedNodes) {
-                if (node.nodeType === 1 && node.tagName === 'SCRIPT' && node.type === 'module' && node.src.startsWith(baseCodeUrl)) {
-                    // Once the script is found and removed, stop the observer, and modify the code
+                if (node.nodeType === 1 && node.tagName === 'SCRIPT' && node.src.startsWith(assetsUrl + "index.")) {
+                    // Once the script is found, stop the observer
                     observer.disconnect();
-                    modifyScript(node.src);
+                    // Fetch the original code and modify it
+                    const newCode = await modifyCode(node.src);
+                    // Create the new script element and inject it into the document head
+                    injectScript(newCode);
                 }
             }
         }
     });
     observer.observe(document.head, { childList: true });
 
-    // Fetch the original script, modify it, and inject the modified script into the page
-    async function modifyScript(originalScriptUrl) {
-        // Fetch the original script
-        const response = await fetch(originalScriptUrl);
-        const originalScript = await response.text();
+    async function modifyCode(codeUrl) {
+        // Fetch the original code
+        const response = await fetch(codeUrl);
+        const originalCode = await response.text();
 
-        // Define the regex patterns for the portions of the script to be replaced
+        // Define the regex patterns for the portions of the code to be replaced
         const importsUrl_regex = /\.\/vendor\.e9cd2c58\.js/g;
         const getLineItem_regex = /getLineItem\(e,t=\{\}\)\{const n=Ve\(\);return B\.get\(`api\/v1\/\$\{n\}\/order\/\$\{e\}\/line_item`,\{params:t\}\)\.then\(a=>a\.data\)\}/g;
         const findOrder_regex = /,t=await Pe\.lookup\(e\);/g;
         const diffPricedExchanges_regex = /differentPricedExchangesEnabled:e\.diff_priced_exchanges==="yes"/g;
 
-        const newScript = originalScript
+        return originalCode
             // Replace relative path to library with absolute
-            .replace(importsUrl_regex, document.querySelector(`link[href^="${baseLibraryUrl}"]`).href)
+            .replace(importsUrl_regex, document.querySelector(`link[href^="${assetsUrl + "vendor."}"]`).href)
             // Replace relative path to components with absolute
             .replace(/import\(\"\.\/([^"]+)\"\)/g, `import("${assetsUrl}$1")`)
             // Allow different priced exchanges
@@ -88,17 +88,16 @@
                 let t = await Pe.lookup(e);
                 // Override workflow exclusions
                 // Override return window and type restrictions
-                // May make lineItem overrides unnecessary
                 t.data.allowlisted = true;`);
+    }
 
-        // Create a blob from the modified script and an object URL from the blob
-        const blob = new Blob([newScript], {type: 'application/javascript; charset=UTF-8'});
-        const url = URL.createObjectURL(blob);
-
-        // Create a new script element using the object URL and inject it into the document head
+    function injectScript(code) {
         const script = document.createElement('script');
         script.type = 'module';
-        script.src = url;
+        // Browsers do not support the inline ES6 syntax of codeUrl so link the code as a Blob
+        const blob = new Blob([code], {type: 'application/javascript; charset=UTF-8'});
+        script.src = URL.createObjectURL(blob);
+
         document.head.appendChild(script);
     }
 })();
