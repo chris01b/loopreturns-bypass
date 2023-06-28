@@ -6,7 +6,10 @@
 // @author       @chris01b
 // @match        https://*.loopreturns.com/*
 // @match        https://returns.aviatornation.com/*
+// @match        https://returns.stussy.com/*
 // @exclude      https://www.loopreturns.com/*
+// @exclude      https://docs.loopreturns.com/*
+// @exclude      https://help.loopreturns.com/*
 // @run-at       document-start
 // ==/UserScript==
 
