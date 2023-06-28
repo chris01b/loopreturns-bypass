@@ -16,25 +16,43 @@
 (function() {
     'use strict';
 
+    // After page load, check localStorage for 'init' and adjust page title and console logs
+    window.addEventListener('load', function() {
+        const init = JSON.parse(localStorage.getItem('init'));
+        const feature = init?.feature_flags?.find(f => f.id === 'happy-returns-partial-return');
+        const active = feature?.active;
+        const enforce = init?.enforce_product_rules;
+
+        console.log('happy-returns-partial-return:', !!active);
+        console.log('enforce_product_rules:', !!enforce);
+
+        if (active) {
+            document.title = 'Happy! ' + document.title;
+            new MutationObserver(mutations => {
+                mutations.forEach(m => {
+                    if (m.type === 'childList' && !document.title.startsWith('Happy! ')) {
+                        document.title = 'Happy! ' + document.title;
+                    }
+                });
+            }).observe(document.querySelector('title'), { childList: true });
+        }
+    });
+
     const assetsUrl = "https://d1nnh0c8uc313v.cloudfront.net/customer-portal/assets/";
 
     // Look for the original code in the document head
     // Handles cases where the original script may be dynamically added to the document head at an unpredictable time
-    const observer = new MutationObserver(async mutations => {
-        for (let mutation of mutations) {
-            for (let node of mutation.addedNodes) {
-                if (node.nodeType === 1 && node.tagName === 'SCRIPT' && node.src.startsWith(assetsUrl + "index.")) {
-                    // Once the script is found, stop the observer
-                    observer.disconnect();
-                    // Fetch the original code and modify it
-                    const newCode = await modifyCode(node.src);
-                    // Create the new script element and inject it into the document head
-                    injectScript(newCode);
-                }
+    new MutationObserver(async mutations => {
+        for (let { addedNodes } of mutations) {
+            const scriptNode = Array.from(addedNodes).find(
+                node => node.nodeType === 1 && node.tagName === 'SCRIPT' && node.src.startsWith(assetsUrl + "index.")
+            );
+            if (scriptNode) {
+                this.disconnect(); // Once the script is found, stop the observer
+                injectScript(await modifyCode(scriptNode.src)); // Fetch, modify, and inject the script
             }
         }
-    });
-    observer.observe(document.head, { childList: true });
+    }).observe(document.head, { childList: true });
 
     async function modifyCode(codeUrl) {
         // Fetch the original code
