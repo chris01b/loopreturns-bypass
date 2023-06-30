@@ -83,6 +83,7 @@
                                 refund: true,
                                 exchange: true,
                                 gift: true,
+                                shopNow: true,
                                 returned: res.data.allowed.returned,
                                 reason: "",
                             };
