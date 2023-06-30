@@ -42,14 +42,14 @@
 
     // Look for the original code in the document head
     // Handles cases where the original script may be dynamically added to the document head at an unpredictable time
-    new MutationObserver(async mutations => {
+    new MutationObserver(function(mutations) {
         for (let { addedNodes } of mutations) {
             const scriptNode = Array.from(addedNodes).find(
                 node => node.nodeType === 1 && node.tagName === 'SCRIPT' && node.src.startsWith(assetsUrl + "index.")
             );
             if (scriptNode) {
                 this.disconnect(); // Once the script is found, stop the observer
-                injectScript(await modifyCode(scriptNode.src)); // Fetch, modify, and inject the script
+                modifyCode(scriptNode.src).then(injectScript); // Fetch, modify, and inject the script
             }
         }
     }).observe(document.head, { childList: true });
