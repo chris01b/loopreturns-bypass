@@ -59,15 +59,17 @@
         const response = await fetch(codeUrl);
         const originalCode = await response.text();
 
+        const importsUrl = document.querySelector(`link[href^="${assetsUrl + "vendor."}"]`).href;
+
         // Define the regex patterns for the portions of the code to be replaced
-        const importsUrl_regex = /\.\/vendor\.e9cd2c58\.js/g;
+        const assetsTempUrl_regex = /[^\/\.]{8}(?=\.js)/;
         const getLineItem_regex = /getLineItem\(e,t=\{\}\)\{const n=Ve\(\);return B\.get\(`api\/v1\/\$\{n\}\/order\/\$\{e\}\/line_item`,\{params:t\}\)\.then\(a=>a\.data\)\}/g;
         const findOrder_regex = /,t=await Pe\.lookup\(e\);/g;
         const diffPricedExchanges_regex = /differentPricedExchangesEnabled:e\.diff_priced_exchanges==="yes"/g;
 
         return originalCode
-            // Replace relative path to library with absolute
-            .replace(importsUrl_regex, document.querySelector(`link[href^="${assetsUrl + "vendor."}"]`).href)
+            // Replace relative path to vendor library with absolute path
+            .replace("./vendor." + importsUrl.match(assetsTempUrl_regex)[0] + ".js", importsUrl)
             // Replace relative path to components with absolute
             .replace(/import\(\"\.\/([^"]+)\"\)/g, `import("${assetsUrl}$1")`)
             // Allow different priced exchanges
