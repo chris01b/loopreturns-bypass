@@ -63,9 +63,13 @@
 
         // Define the regex patterns for the portions of the code to be replaced
         const assetsTempUrl_regex = /[^\/\.]{8}(?=\.js)/;
-        const getLineItem_regex = /getLineItem\(e,t=\{\}\)\{const n=Ve\(\);return B\.get\(`api\/v1\/\$\{n\}\/order\/\$\{e\}\/line_item`,\{params:t\}\)\.then\(a=>a\.data\)\}/g;
-        const findOrder_regex = /,t=await Pe\.lookup\(e\);/g;
+        const getLineItem_regex = /getLineItem\([\w\d]+,[\w\d]+=\{\}\)\{const [\w\d]+=([\w\d]+)\(\);return ([\w\d]+)\.get\(`api\/v1\/\$\{[\w\d]+\}\/order\/\$\{[\w\d]+\}\/line_item`,\{params:[\w\d]+\}\)\.then\([\w\d]+=>[\w\d]+\.data\)\}/i; 
+        const findOrder_regex = /,t=await Me\.lookup\(e\);/g;
         const diffPricedExchanges_regex = /differentPricedExchangesEnabled:e\.diff_priced_exchanges==="yes"/g;
+
+        // 1st Capture Group: shopId
+        // 2nd Capture Group: axios
+        const getLineItem_matches = originalCode.match(getLineItem_regex);
 
         return originalCode
             // Replace relative path to vendor library with absolute path
@@ -77,8 +81,8 @@
             // Make the client think that returns, refunds, and exchanges are allowed
             .replace(getLineItem_regex,
                 `getLineItem(lineItemId, params = {}) {
-                    const shopId = Ve();
-                    return B.get("api/v1/" + shopId + "/order/" + lineItemId + "/line_item", { params }).then(
+                    const shopId = ${getLineItem_matches[1]}();
+                    return ${getLineItem_matches[2]}.get("api/v1/" + shopId + "/order/" + lineItemId + "/line_item", { params }).then(
                         (res) => {
                             res.data.allowed = {
                                 return: true,
@@ -109,7 +113,7 @@
             // Make the client think that the order is eligible for a refund forever even if it is a gift too
             .replace(findOrder_regex,
                 `;
-                let t = await Pe.lookup(e);
+                let t = await Me.lookup(e);
                 // Override workflow exclusions
                 // Override return window and type restrictions
                 t.data.allowlisted = true;`);
