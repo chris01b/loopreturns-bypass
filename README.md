@@ -35,5 +35,5 @@ The vulnerability can be reproduced with the proof of concept code. It overrides
 
 ## Proof of concept code installation
 1. Install [Tampermonkey](https://www.tampermonkey.net/) in your browser.
-2. Paste [this code](https://raw.githubusercontent.com/chris01b/loopreturns-bypass/main/loopreturns-bypass.js) into a new Tampermonkey userscript, save it, then enable it.
+2. Paste [this code](https://github.com/chris01b/loopreturns-bypass/blob/main/loopreturns-bypass.js) into a new Tampermonkey userscript, save it, then enable it.
 3. Navigate to any Loop Returns store portal (i.e. [returns.aviatornation.com](https://returns.aviatornation.com/)) to see the effects.
