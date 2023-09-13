@@ -13,6 +13,12 @@
 > Workflows is a feature where merchants can create and manage return rules. Workflows are intended to accommodate scenarios that fall outside of a typical return policy. 
 
 # Vulnerability
+Initially, a significant vulnerability was identified where the Loop Returns system lacked server-side validation of return requests, potentially allowing clients to bypass workflow restrictions. This vulnerability has been responsibly disclosed and **has been addressed and fixed by the Loop Returns team**.
+
+## Update on Vulnerability (Fixed)
+Loop Returns acted promptly to rectify the vulnerability, reinforcing server-side validations to prevent any misuse of the workflow rules. Clients can no longer bypass the return restrictions set by the workflow rules, safeguarding the interests of Shopify merchants.
+
+## Vulnerability Details
 When a workflow prohibits returns based on its rules, the server instructs the client not to proceed with them. However, Loop Returns does not perform server-side validation for returns requested by the client. If the client behaves as though the workflow allows the return to proceed, the server will comply.
 
 The vulnerability can be reproduced with the proof of concept code. It overrides certain responses server which allows the client to continue as if workflows permit all return options.
@@ -37,3 +43,5 @@ The vulnerability can be reproduced with the proof of concept code. It overrides
 1. Install [Tampermonkey](https://www.tampermonkey.net/) in your browser.
 2. Paste [this code](https://github.com/chris01b/loopreturns-bypass/blob/main/loopreturns-bypass.js) into a new Tampermonkey userscript, save it, then enable it.
 3. Navigate to any Loop Returns store portal (i.e. [returns.aviatornation.com](https://returns.aviatornation.com/)) to see the effects.
+
+Note: This proof of concept code served as a demonstration tool during the vulnerability assessment and is no longer functional due to the implemented fixes.
